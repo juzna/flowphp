@@ -41,7 +41,7 @@ class Flow
 		// le flow
 		$ret = self::$scheduler->flow($components);
 
-		if ($retArray) {
+		if ( ! $retArray) {
 			$ret = reset($ret);
 		}
 
