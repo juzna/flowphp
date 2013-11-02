@@ -137,3 +137,21 @@ $ret = $scheduler->flow([
 	}
 ]);
 Assert::true($ret[0] instanceof InvalidArgumentException);
+
+
+// inner generator throws
+$loop->ticks = NULL;
+$ret = $scheduler->flow([
+	function() use ($loop) {
+		// inner generator
+		$g = function() use ($loop) {
+			$foo = (yield $loop->createTickPromise("foo")); // will be resolved on tick
+			throw new RuntimeException("tralala");
+		};
+
+		$x = (yield $g());
+		Assert::same("foo", $x);
+	}
+]);
+Assert::true($ret[0] instanceof RuntimeException);
+Assert::same(1, count($loop->ticks));

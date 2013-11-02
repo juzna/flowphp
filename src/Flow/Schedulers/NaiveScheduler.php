@@ -45,9 +45,20 @@ class NaiveScheduler extends BaseScheduler
 				$first = false;
 
 				a2:
-				if ($v2 instanceof \Generator) $v2 = static::flow([$v2])[0];
+				if ($v2 instanceof \Generator) {
+					$v2 = static::flow([$v2])[0];
+				}
 
 				if (!$g->valid()) break;
+				elseif ($v2 instanceof \Exception) {
+					try {
+						$v2 = $g->throw($v2);
+						goto a2;
+					} catch(\Exception $e) {
+						$ret[$k] = $e;
+						break;
+					}
+				}
 				elseif ($v2 instanceof PromiseInterface) {
 					$v = new PromiseWrapper($v2);
 					while (!$v->isResolved) {
