@@ -19,12 +19,21 @@ class NaiveScheduler extends BaseScheduler
 		$ret = [];
 
 		foreach ($components as $k => $component) {
+			$ret[$k] = NULL;
+
 			$v = null;
 			$first = true;
+			again:
 			if ($component instanceof FlowControl) $g = $component->renderFlow();
 			elseif ($component instanceof \Generator) $g = $component;
-			elseif ($component instanceof \Closure) $g = $component();
-			else throw new \Exception("Invalid component given");
+			elseif ($component instanceof \Closure) {
+				$component = $component();
+				goto again;
+
+			} else {
+				$ret[$k] = $component; // not a co-routine
+				continue;
+			}
 
 			do {
 				$v2 = $first ? $g->current() : $g->send($v);
@@ -38,12 +47,13 @@ class NaiveScheduler extends BaseScheduler
 					}
 					$v = $v->data;
 				}
-				elseif ($v2 instanceof Result) $v = $v2->data;
+				elseif ($v2 instanceof Result) {
+					$ret[$k] = $v2->data;
+					break;
+				}
 				else $v = $v2;
 
 			} while($g->valid());
-
-			$ret[$k] = $v;
 		}
 
 		return $ret;
