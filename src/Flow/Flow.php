@@ -8,6 +8,7 @@ namespace Flow;
  */
 class Flow
 {
+	const PASS = "\x91\x33\x65"; // magic
 
 	/** @var IScheduler */
 	private static $scheduler;
@@ -47,6 +48,12 @@ class Flow
 		}
 
 		return $ret;
+	}
+
+
+	public static function add($task)
+	{
+		self::$scheduler->add($task);
 	}
 
 }

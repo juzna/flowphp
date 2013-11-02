@@ -2,6 +2,7 @@
 
 namespace Flow\Schedulers;
 
+use Flow\Flow;
 use Flow\FlowControl;
 use Flow\PromiseWrapper;
 use Flow\Result;
@@ -20,11 +21,15 @@ class HorizontalScheduler extends BaseScheduler
 	public $onAfterLoopCycle = [];
 
 
+	private $ret = [];
+	private $status = [];
+	private $running = [];
+
 	public function flow(array $components)
 	{
-		$ret = [];
-		$status = []; // id -> { component, generator, value, isFirst, parentKey, waitingFor }
-		$running = []; // id -> true
+		$ret = &$this->ret;
+		$status = &$this->status; // id -> { component, generator, value, isFirst, parentKey, waitingFor }
+		$running = &$this->running; // id -> true
 
 		// init all components
 		foreach ($components as $k => $component) {
@@ -53,7 +58,6 @@ class HorizontalScheduler extends BaseScheduler
 
 
 		// process incrementally
-		$i = count($status);
 		do {
 			$numWaiting = 0;
 
@@ -93,7 +97,7 @@ class HorizontalScheduler extends BaseScheduler
 					if ($v2 instanceof PromiseInterface) {
 						$v2 = new PromiseWrapper($v2);
 					}
-					$i++;
+					$i = count($status);
 					$status[$i] = [
 						$component,
 						$g2, // new generator
@@ -122,6 +126,9 @@ class HorizontalScheduler extends BaseScheduler
 						$numWaiting++;
 					}
 				}
+				elseif ($v2 === Flow::PASS) {
+					// no-op, go to another component
+				}
 				else {
 					if ($v2 instanceof Result) {
 						$status[$k][6] = $v2->data;
@@ -134,9 +141,11 @@ class HorizontalScheduler extends BaseScheduler
 			}
 
 			if ($numWaiting === 0) continue; // nothing waits, try next level
-			foreach ($this->onBeforeLoopCycle as $cb) $cb($this);
-			$this->eventLoop->run();
-			foreach ($this->onAfterLoopCycle as $cb) $cb($this);
+			if ($this->eventLoop) {
+				foreach ($this->onBeforeLoopCycle as $cb) $cb($this);
+				$this->eventLoop->run();
+				foreach ($this->onAfterLoopCycle as $cb) $cb($this);
+			}
 		} while($running);
 
 
@@ -148,6 +157,32 @@ class HorizontalScheduler extends BaseScheduler
 		}
 
 		return $ret;
+	}
+
+
+	public function add($component)
+	{
+		initAgain:
+		if ($component instanceof FlowControl) $g = $component->renderFlow();
+		elseif ($component instanceof \Generator) $g = $component;
+		elseif ($component instanceof \Closure) {
+			$component = $component();
+			goto initAgain;
+		} else {
+			return; // not a co-routine
+		}
+
+		$i = count($this->status);
+		$this->status[] = [
+			$component,
+			$g,
+			NULL,
+			TRUE,
+			NULL,
+			NULL,
+			NULL,
+		];
+		$this->running[$i] = true;
 	}
 
 }
