@@ -2,6 +2,10 @@
 
 namespace Flow;
 
+
+/**
+ * Wrapper for return value of co-routine
+ */
 class Result
 {
 	public $data;
