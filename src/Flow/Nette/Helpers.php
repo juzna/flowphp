@@ -28,9 +28,9 @@ class Helpers
 	public static function renderTemplate(Template $tpl)
 	{
 		if (self::$async) {
-			return self::renderTemplateSync($tpl);
-		} else {
 			return self::renderTemplateAsync($tpl);
+		} else {
+			return self::renderTemplateSync($tpl);
 		}
 	}
 
