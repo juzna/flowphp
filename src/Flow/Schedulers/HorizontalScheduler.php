@@ -72,9 +72,11 @@ class HorizontalScheduler extends BaseScheduler
 
 				again:
 				try {
-					$v2 = $first ? $g->current() : $g->send($v);
+					if ($v instanceof \Exception) $v2 = $g->throw($v);
+					else $v2 = $first ? $g->current() : $g->send($v);
 				} catch (\Exception $e) {
 					$status[$k][6] = $e;
+					unset($running[$k]);
 					continue;
 				}
 				$status[$k][3] = $first = false;
@@ -104,7 +106,11 @@ class HorizontalScheduler extends BaseScheduler
 				elseif ($v2 instanceof PromiseInterface) {
 					$status[$k][2] = $p = new PromiseWrapper($v2);
 					if ($p->isResolved) {
-						$v = $status[$k][2] = $p->data;
+						if ($p->error) {
+							$v = $status[$k][2] = $p->error instanceof \Exception ? $p->error : new \Exception($p->error);
+						} else {
+							$v = $status[$k][2] = $p->data;
+						}
 						goto again;
 					} else {
 						$numWaiting++;
