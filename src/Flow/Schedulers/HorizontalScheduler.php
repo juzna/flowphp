@@ -61,7 +61,7 @@ class HorizontalScheduler extends BaseScheduler
 				if ( ! isset($running[$k])) continue; // already finished
 				if ($waitingFor) {
 					if (isset($running[$waitingFor])) continue; // inner is still running
-					$v = $status[$waitingFor][2];
+					$v = $status[$waitingFor][6];
 
 					$status[$k][5] = NULL;
 				}
@@ -77,6 +77,9 @@ class HorizontalScheduler extends BaseScheduler
 				if ($v2 instanceof \Generator) { // inner generator created -> add to queue
 					$g2 = $v2;
 					$v2 = $v2->current();
+					if ($v2 instanceof PromiseInterface) {
+						$v2 = new PromiseWrapper($v2);
+					}
 					$i++;
 					$status[$i] = [
 						$component,
@@ -84,6 +87,7 @@ class HorizontalScheduler extends BaseScheduler
 						$v2,
 						FALSE,
 						$k,
+						NULL,
 						NULL,
 					];
 					$running[$i] = true;
