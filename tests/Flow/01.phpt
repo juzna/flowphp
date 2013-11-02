@@ -116,6 +116,17 @@ Assert::same( [ NULL ], $ret);
 Assert::same(2, count($loop->ticks));
 
 
+// generator throws
+$ret = $scheduler->flow([
+	function() {
+		yield;
+		throw new \RuntimeException("tralala");
+		Assert::fail("shall not reach this code");
+	}
+]);
+Assert::true($ret[0] instanceof RuntimeException);
+
+
 // yield with rejected promise
 $ret = $scheduler->flow([
 	function() {

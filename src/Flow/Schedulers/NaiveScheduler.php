@@ -36,7 +36,12 @@ class NaiveScheduler extends BaseScheduler
 			}
 
 			do {
-				$v2 = $first ? $g->current() : $g->send($v);
+				try {
+					$v2 = $first ? $g->current() : $g->send($v);
+				} catch(\Exception $e) {
+					$ret[$k] = $e;
+					break;
+				}
 				$first = false;
 
 				a2:
