@@ -39,6 +39,7 @@ class NaiveScheduler extends BaseScheduler
 				$v2 = $first ? $g->current() : $g->send($v);
 				$first = false;
 
+				a2:
 				if ($v2 instanceof \Generator) $v2 = static::flow([$v2])[0];
 
 				if (!$g->valid()) break;
@@ -47,7 +48,17 @@ class NaiveScheduler extends BaseScheduler
 					while (!$v->isResolved) {
 						$this->eventLoop->run();
 					}
-					$v = $v->data;
+					if ($v->error) {
+						try {
+							$v2 = $g->throw($v->error instanceof \Exception ? $v->error : new \Exception($v->error));
+							goto a2;
+						} catch(\Exception $e) {
+							$ret[$k] = $e;
+							break;
+						}
+					} else {
+						$v = $v->data;
+					}
 				}
 				elseif ($v2 instanceof Result) {
 					$ret[$k] = $v2->data;

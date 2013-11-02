@@ -115,3 +115,14 @@ $ret = $scheduler->flow([
 Assert::same( [ NULL ], $ret);
 Assert::same(2, count($loop->ticks));
 
+
+// yield with rejected promise
+$ret = $scheduler->flow([
+	function() {
+		$p = new React\Promise\RejectedPromise(new InvalidArgumentException('foo'));
+		$foo = (yield $p); // shall throw
+
+		Assert::fail("shall not reach this code");
+	}
+]);
+Assert::true($ret[0] instanceof InvalidArgumentException);
