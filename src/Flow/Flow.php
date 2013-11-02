@@ -2,11 +2,14 @@
 
 namespace Flow;
 
+use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 
 
 class Flow
 {
+	/** @var LoopInterface Must be injected first */
+	public static $eventLoop;
 	public static $async = FALSE;
 	public static $components = [];
 
@@ -50,7 +53,23 @@ class Flow
 
 	public static function flowAuto($array)
 	{
-		return self::flowComponentsHorizontal($array);
+		// wrap start
+		if (is_array($array)) {
+			$retArray = TRUE;
+
+		} else {
+			$retArray = FALSE;
+			$array = [ $array ];
+		}
+
+		// le magic
+		$ret = self::flowComponentsHorizontal($array);
+
+		if ($retArray) {
+			$ret = reset($ret);
+		}
+
+		return $ret;
 	}
 
 
@@ -73,7 +92,7 @@ class Flow
 				elseif ($v2 instanceof PromiseInterface) {
 					$v = new PromiseWrapper($v2);
 					while (!$v->isResolved) {
-						\Nette\Environment::getService('eventLoop')->run();
+						self::$eventLoop->run();
 					}
 					$v = $v->data;
 				}
@@ -166,8 +185,8 @@ class Flow
 //			echo "round done, sending bulk requests and waiting for network\n";
 //			Scheduler::sendRequests();
 			echo "waiting for react\n";
-			\Nette\Environment::getService('eventLoop')->run();
-			echo "\n\n";
+			self::$eventLoop->run();
+			echo "[DONE]\n\n";
 		} while($running);
 
 
