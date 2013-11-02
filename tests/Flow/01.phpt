@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/MockEventLoop.php';
 
 
+MockEventLoop::$debug = (bool) getenv('DEBUG');
 $loop = new MockEventLoop;
 $scheduler = new Flow\Schedulers\HorizontalScheduler($loop);
 
