@@ -43,6 +43,7 @@ class Flow
 
 		if ( ! $retArray) {
 			$ret = reset($ret);
+			if ($ret instanceof \Exception) throw $ret;
 		}
 
 		return $ret;

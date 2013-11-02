@@ -66,7 +66,13 @@ class HorizontalScheduler extends BaseScheduler
 					$status[$k][5] = NULL;
 				}
 				elseif ($v instanceof PromiseWrapper) { // PromiseInterface -> finished?
-					if ($v->isResolved) $v = $v->data;
+					if ($v->isResolved) {
+						if ($p->error) {
+							$v = $status[$k][2] = $p->error instanceof \Exception ? $p->error : new \Exception($p->error);
+						} else {
+							$v = $status[$k][2] = $p->data;
+						}
+					}
 					else continue; // not yet finished, try next component
 				}
 
