@@ -16,6 +16,12 @@ function result($value) {
 }
 
 
+/**
+ * Shortcut for Flow\Flow::run
+ *
+ * @param array|mixed $components
+ * @return array|mixed
+ */
 function flow($components) {
-	return Flow\Flow::flowAuto($components);
+	return Flow\Flow::run($components);
 }
