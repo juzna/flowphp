@@ -14,3 +14,8 @@
 function result($value) {
 	return new Flow\Result($value);
 }
+
+
+function flow($components) {
+	return Flow\Flow::flowAuto($components);
+}
