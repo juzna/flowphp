@@ -39,6 +39,8 @@ class NaiveScheduler extends BaseScheduler
 				$v2 = $first ? $g->current() : $g->send($v);
 				$first = false;
 
+				if ($v2 instanceof \Generator) $v2 = static::flow([$v2])[0];
+
 				if (!$g->valid()) break;
 				elseif ($v2 instanceof PromiseInterface) {
 					$v = new PromiseWrapper($v2);

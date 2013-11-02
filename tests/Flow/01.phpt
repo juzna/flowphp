@@ -96,3 +96,22 @@ $ret = $scheduler->flow([
 Assert::same( [ NULL ], $ret);
 Assert::same(1, count($loop->ticks));
 
+
+// yield with inner generator
+$loop->ticks = NULL;
+$ret = $scheduler->flow([
+	function() use ($loop) {
+		// inner generator
+		$g = function() use ($loop) {
+			$foo = (yield $loop->createTickPromise("foo")); // will be resolved on tick
+			$bar = (yield $loop->createTickPromise("bar")); // will be resolved on tick
+			yield result($foo);
+		};
+
+		$x = (yield $g());
+		Assert::same("foo", $x);
+	}
+]);
+Assert::same( [ NULL ], $ret);
+Assert::same(2, count($loop->ticks));
+
