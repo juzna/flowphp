@@ -71,7 +71,12 @@ class HorizontalScheduler extends BaseScheduler
 				}
 
 				again:
-				$v2 = $first ? $g->current() : $g->send($v);
+				try {
+					$v2 = $first ? $g->current() : $g->send($v);
+				} catch (\Exception $e) {
+					$status[$k][6] = $e;
+					continue;
+				}
 				$status[$k][3] = $first = false;
 
 				if ($v2 instanceof \Generator) { // inner generator created -> add to queue
