@@ -3,6 +3,7 @@
 namespace Flow\Nette;
 
 use Flow\Flow;
+use Flow\FlowControl;
 use Nette;
 use Nette\Templating\Template;
 
@@ -13,7 +14,10 @@ use Nette\Templating\Template;
 class Helpers
 {
 
-	public static $async = FALSE;
+	/** @var bool Enable cooperative processing? */
+	public static $async = TRUE;
+
+	/** @var \Generator[]|FlowControl[] Components to be rendered */
 	public static $components = [];
 
 
