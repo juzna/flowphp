@@ -8,7 +8,7 @@ require_once __DIR__ . '/MockEventLoop.php';
 
 
 $loop = new MockEventLoop;
-$scheduler = new Flow\Schedulers\NaiveScheduler($loop);
+$scheduler = new Flow\Schedulers\HorizontalScheduler($loop);
 
 
 // normal function, not a generator

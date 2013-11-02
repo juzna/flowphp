@@ -28,10 +28,16 @@ class HorizontalScheduler extends BaseScheduler
 
 		// init all components
 		foreach ($components as $k => $component) {
+			initAgain:
 			if ($component instanceof FlowControl) $g = $component->renderFlow();
 			elseif ($component instanceof \Generator) $g = $component;
-			elseif ($component instanceof \Closure) $g = $component();
-			else throw new \Exception("Invalid component given");
+			elseif ($component instanceof \Closure) {
+				$component = $component();
+				goto initAgain;
+			} else {
+				$ret[$k] = $component; // not a co-routine
+				continue;
+			}
 
 			$status[$k] = [
 				$component,
@@ -40,15 +46,18 @@ class HorizontalScheduler extends BaseScheduler
 				TRUE,
 				NULL,
 				NULL,
+				NULL,
 			];
 			$running[$k] = true;
 		}
 
 
 		// process incrementally
-		$i = count($components);
+		$i = count($status);
 		do {
-			foreach ($status as $k => list($component, $g, $v, $first, $parentKey, $waitingFor)) {
+			$numWaiting = 0;
+
+			foreach ($status as $k => list($component, $g, $v, $first, $parentKey, $waitingFor, $result)) {
 				if ( ! isset($running[$k])) continue; // already finished
 				if ($waitingFor) {
 					if (isset($running[$waitingFor])) continue; // inner is still running
@@ -80,12 +89,21 @@ class HorizontalScheduler extends BaseScheduler
 					$running[$i] = true;
 
 					$status[$k][5] = $i; // current is waiting for the new one
+					$numWaiting++;
 				}
 				elseif ( ! $g->valid()) unset($running[$k]);
-				elseif ($v2 instanceof PromiseInterface) $status[$k][2] = new PromiseWrapper($v2);
+				elseif ($v2 instanceof PromiseInterface) {
+					$status[$k][2] = $p = new PromiseWrapper($v2);
+					if ($p->isResolved) {
+						$v = $status[$k][2] = $p->data;
+						goto again;
+					} else {
+						$numWaiting++;
+					}
+				}
 				else {
 					if ($v2 instanceof Result) {
-						$status[$k][2] = $v2->data;
+						$status[$k][6] = $v2->data;
 						unset($running[$k]);
 						continue;
 					}
@@ -94,6 +112,7 @@ class HorizontalScheduler extends BaseScheduler
 				}
 			}
 
+			if ($numWaiting === 0) continue; // nothing waits, try next level
 			foreach ($this->onBeforeLoopCycle as $cb) $cb($this);
 			$this->eventLoop->run();
 			foreach ($this->onAfterLoopCycle as $cb) $cb($this);
@@ -101,9 +120,9 @@ class HorizontalScheduler extends BaseScheduler
 
 
 		// collect results
-		foreach ($status as $k => list($component, $g, $v, $first)) {
+		foreach ($status as $k => list($component, $g, $v, $first, $parentKey, $waitingFor, $result)) {
 			if (isset($components[$k])) { // must be original component (not an inner one)
-				$ret[$k] = $v;
+				$ret[$k] = $result;
 			}
 		}
 
