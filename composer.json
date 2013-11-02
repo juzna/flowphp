@@ -1,0 +1,30 @@
+{
+	"name": "juzna/flowphp",
+	"type": "library",
+	"description": "Cooperative Multitasking for PHP",
+	"keywords": [
+		"yield"
+	],
+	"authors": [
+		{
+			"name": "Jan Dolecek",
+			"email": "juzna.cz@gmail.com",
+			"role": "Developer"
+		}
+	],
+	"require": {
+		"php": ">=5.5",
+		"react/promise": "*"
+	},
+	"autoload": {
+		"psr-0": {
+			"Flow": "src/"
+		},
+		"classmap": [
+			"src/exceptions.php"
+		],
+		"files": [
+			"src/functions.php"
+		]
+	}
+}
